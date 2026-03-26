@@ -22,7 +22,7 @@ interface WalletContextType {
   isCorrectNetwork: boolean;
   isModalOpen: boolean;
   setIsModalOpen: (open: boolean) => void;
-  connectWallet: (silent?: boolean) => Promise<void>;
+  connectWallet: (walletId?: string, silent?: boolean) => Promise<void>;
   disconnectWallet: () => void;
   switchNetwork: () => Promise<void>;
   getContract: () => Contract | null;
@@ -66,22 +66,35 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const connectWallet = useCallback(async (silent = false) => {
-    if (typeof window === "undefined" || !window.ethereum) {
-      if (!silent) alert("Please install a Web3 wallet (MetaMask, OKX, etc.) to connect.");
+  const connectWallet = useCallback(async (walletId?: string, silent = false) => {
+    if (typeof window === "undefined") return;
+
+    let targetProvider = window.ethereum;
+
+    console.log("Connect attempt:", { walletId, hasMetamask: !!window.ethereum?.isMetaMask, hasOkx: !!(window as any).okxwallet });
+
+    // Handle specific providers
+    if (walletId === "okx" && (window as any).okxwallet) {
+      targetProvider = (window as any).okxwallet;
+    } else if (walletId === "metamask" && window.ethereum?.isMetaMask) {
+      targetProvider = window.ethereum;
+    }
+
+    if (!targetProvider) {
+      if (!silent) alert(`Please install the ${walletId || "Web3"} wallet extension to connect.`);
       return;
     }
 
     setIsConnecting(true);
     try {
-      const browserProvider = new BrowserProvider(window.ethereum);
+      const browserProvider = new BrowserProvider(targetProvider);
       
-      // Use eth_accounts for silent reconnect, eth_requestAccounts for manual
-      const accounts = silent 
-        ? await browserProvider.send("eth_accounts", [])
-        : await browserProvider.send("eth_requestAccounts", []);
+      // Try eth_accounts (silent) or eth_requestAccounts (manual)
+      const accounts = (silent 
+        ? await targetProvider.request({ method: "eth_accounts" })
+        : await targetProvider.request({ method: "eth_requestAccounts" })) as string[];
 
-      if (accounts.length > 0) {
+      if (accounts && Array.isArray(accounts) && accounts.length > 0) {
         const walletSigner = await browserProvider.getSigner();
         setProvider(browserProvider);
         setSigner(walletSigner);
@@ -92,6 +105,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("Failed to connect wallet:", error);
+      if (!silent) alert("Connection failed. Please check your wallet extension and try again.");
     } finally {
       setIsConnecting(false);
     }
@@ -109,7 +123,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const shouldReconnect = localStorage.getItem("arcx_should_reconnect");
     if (shouldReconnect === "true") {
-      connectWallet(true);
+      connectWallet(undefined, true);
     }
   }, [connectWallet]);
 

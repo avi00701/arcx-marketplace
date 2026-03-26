@@ -32,17 +32,24 @@ export default function Hero({ nfts }: HeroProps) {
   const handleNext = () => setCurrentIndex((prev) => (prev + 1) % nfts.length);
   const handlePrev = () => setCurrentIndex((prev) => (prev - 1 + nfts.length) % nfts.length);
 
-  // Parallax calculations
-  const bgTranslate = Math.min(scrollY * 0.4, 150);
+  // Enhanced Parallax calculations for "Obsidian" depth
+  const bgTranslate = Math.min(scrollY * 0.3, 120);
   const contentFade = Math.max(1 - scrollY / 400, 0);
-  const titleX = scrollY * 0.6;   // Moves Right
-  const statsX = -scrollY * 0.4;  // Moves Left
+  
+  // PRIMARY MOTION: Content moves RIGHT
+  const titleX = scrollY * 0.8; 
+  
+  // SECONDARY MOTION: Decorative bg text moves LEFT
+  const bgTextX = -scrollY * 0.5;
+  
+  // TERTIARY MOTION: Image card moves LEFT
+  const statsX = -scrollY * 0.6;
 
   return (
     <section className="relative w-full h-[420px] flex items-center overflow-hidden rounded-[48px] border border-white/10 shadow-2xl group animate-slide-up">
       {/* 1. Immersive Background Layer */}
       <div 
-        className="absolute inset-0 z-0"
+        className="absolute inset-0 z-0 h-[120%]"
         style={{ transform: `translateY(${bgTranslate}px)` }}
       >
         <div key={nft.id} className="absolute inset-0 transition-all duration-[2s]">
@@ -60,10 +67,20 @@ export default function Hero({ nfts }: HeroProps) {
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/20 opacity-40" />
       </div>
 
-      {/* 2. Content Overlay (Distributed) */}
+      {/* 2. BACKGROUND DECORATIVE TEXT (Moves LEFT) */}
+      <div 
+        className="absolute inset-0 z-[5] pointer-events-none flex items-center whitespace-nowrap overflow-hidden opacity-5 select-none"
+        style={{ transform: `translateX(${bgTextX}px)` }}
+      >
+        <h2 className="text-[240px] font-black uppercase italic tracking-tighter text-white/20">
+          {nft.collection} • {nft.collection} • {nft.collection}
+        </h2>
+      </div>
+
+      {/* 3. Content Overlay (Distributed) */}
       <div className="relative z-10 w-full h-full px-12 md:px-24 flex items-center">
         
-        {/* LEFT: Identity & Action Group */}
+        {/* LEFT: Identity & Action Group (Moves RIGHT) */}
         <div 
           key={`id-${nft.id}`}
           className="flex flex-col gap-8 transition-transform duration-100 ease-out z-10"
@@ -94,10 +111,10 @@ export default function Hero({ nfts }: HeroProps) {
           </Link>
         </div>
 
-        {/* RIGHT: Floating Media Group */}
+        {/* RIGHT: Floating Media Group (Moves LEFT) */}
         <div 
           key={`media-${nft.id}`}
-          className="absolute left-[72%] -translate-x-1/2 flex items-center justify-center z-0"
+          className="absolute left-[72%] -translate-x-1/2 flex items-center justify-center z-[15]"
           style={{ opacity: contentFade, transform: `translateX(${statsX}px) translateY(${-scrollY * 0.1}px)` }}
         >
            <div className="relative w-[300px] h-[300px] md:w-[360px] md:h-[360px] rounded-[32px] overflow-hidden border border-white/20 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.8)] glass-cosmic p-1 animate-float transition-all duration-700">
