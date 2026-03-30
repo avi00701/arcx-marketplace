@@ -1,13 +1,5 @@
+import { getLeaderboardData } from "@/lib/db";
 import { Trophy, TrendingUp, User as UserIcon, Activity, ExternalLink } from "lucide-react";
-
-async function getLeaderboard() {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/leaderboard`, {
-    cache: "no-store",
-  });
-  if (!res.ok) return [];
-  return res.json();
-}
 
 function getProfileLink(wallet) {
   return `https://polymarket.com/profile/${wallet}`;
@@ -19,7 +11,7 @@ function shortWallet(addr) {
 }
 
 export default async function Page() {
-  const data = await getLeaderboard();
+  const data = await getLeaderboardData();
 
   return (
     <div className="min-h-screen bg-[#0a0a0b] text-white selection:bg-yellow-500/30">
